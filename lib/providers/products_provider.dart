@@ -1,4 +1,6 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as https;
 
 import './product.dart';
 
@@ -80,15 +82,36 @@ class Products with ChangeNotifier {
     return _items.firstWhere((product) => product.id == id);
   }
 
-  void addItem(Product product) {
-    final newProduct = Product(
-        id: DateTime.now().toString(),
-        productName: product.productName,
-        description: product.description,
-        price: product.price,
-        imageUrl: product.imageUrl);
-    _items.add(newProduct);
-    notifyListeners();
+  Future<void> addItem(Product product) async {
+    const url =
+        'https://marketareaflutter-default-rtdb.firebaseio.com/products.json';
+
+    try {
+      final res = await https.post(
+        url,
+        body: json.encode({
+          'productName': product.productName,
+          'description': product.description,
+          'price': product.price,
+          'imgUrl': product.imageUrl,
+          'isFavorite': product.isFavorite,
+        }),
+      );
+
+      final newProduct = Product(
+          id: jsonDecode(res.body)['name'],
+          productName: product.productName,
+          description: product.description,
+          price: product.price,
+          imageUrl: product.imageUrl);
+      _items.add(newProduct);
+      notifyListeners();
+      
+      print(jsonDecode(res.body));
+    } catch (err) {
+      print(err);
+      throw err;
+    }
   }
 
   void updateProduct(String id, Product editedProduct) {
