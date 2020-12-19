@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/model/http_exception.dart';
+import '../screens/product_overview_screen.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/auth_provider.dart';
 
 enum AuthMode { Signup, Login }
 
@@ -25,7 +30,7 @@ class _SignInOutCardState extends State<SignInOutCard> {
 
   final _passwordController = TextEditingController();
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState.validate()) {
       // Invalid!
       return;
@@ -34,14 +39,63 @@ class _SignInOutCardState extends State<SignInOutCard> {
     setState(() {
       _isLoading = true;
     });
-    if (_authMode == AuthMode.Login) {
-      // Log user in
-    } else {
-      // Sign user up
+
+    try {
+      if (_authMode == AuthMode.Login) {
+        // Log user in
+        await Provider.of<Auth>(context, listen: false)
+            .signInWithMail(_authData['email'], _authData['password'])
+            .then((_) {
+          Navigator.of(context).pushNamed(ProductOverviewScreen.routeName);
+        });
+      } else {
+        // Sign user up
+
+        await Provider.of<Auth>(context, listen: false)
+            .signUpWithMail(_authData['email'], _authData['password']);
+      }
+    } on HttpException catch (err) {
+      var errorMessage = 'Authentication failed';
+      if (err.toString().contains('EMAIL_EXISTS')) {
+        errorMessage = 'This email address is already in use.';
+      } else if (err.toString().contains('INVALID_EMAIL')) {
+        errorMessage = 'This is not a valid email address';
+      } else if (err.toString().contains('WEAK_PASSWORD')) {
+        errorMessage = 'This password is too weak.';
+      } else if (err.toString().contains('EMAIL_NOT_FOUND')) {
+        errorMessage = 'Could not find a user with that email.';
+      } else if (err.toString().contains('INVALID_PASSWORD')) {
+        errorMessage = 'Invalid password.';
+      }
+      _showErrorDialog(errorMessage);
+    } catch (err) {
+      const errorMessage =
+          'Could not authenticate you. Please try again later.';
+      _showErrorDialog(errorMessage);
     }
+
     setState(() {
       _isLoading = false;
     });
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('An Error Occurred!'),
+            content: Text(message),
+            actions: <Widget>[
+              FlatButton(
+                child: Text('Okay'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              )
+            ],
+          );
+        });
   }
 
   void _switchAuthMode() {
@@ -76,7 +130,7 @@ class _SignInOutCardState extends State<SignInOutCard> {
             child: Column(
               children: <Widget>[
                 TextFormField(
-                  decoration: InputDecoration(labelText: 'E-Mail'),
+                  decoration: InputDecoration(labelText: 'Email'),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value.isEmpty || !value.contains('@')) {

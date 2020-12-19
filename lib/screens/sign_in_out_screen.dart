@@ -44,8 +44,7 @@ class SignInOutScreen extends StatelessWidget {
                       padding:
                           EdgeInsets.symmetric(vertical: 8.0, horizontal: 94.0),
                       transform: Matrix4.rotationZ(-8 * pi / 180)
-                        ..translate(-10.0),
-                      // ..translate(-10.0),
+                        ..translate(-15.0),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         color: Colors.deepOrange.shade900,
@@ -61,7 +60,7 @@ class SignInOutScreen extends StatelessWidget {
                         'Market Area',
                         style: TextStyle(
                           color: Theme.of(context).accentTextTheme.headline6.color,
-                          fontSize: 50,
+                          fontSize: 30,
                           fontFamily: 'Anton',
                           fontWeight: FontWeight.normal,
                         ),
