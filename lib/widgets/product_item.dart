@@ -5,17 +5,13 @@ import 'package:provider/provider.dart';
 import '../screens/product_detail_screen.dart';
 
 class ProductItem extends StatelessWidget {
-  /* final imgUrl;
-  final title;
-  final id;
 
-  ProductItem({this.id, this.title, this.imgUrl});
-  */
 
   @override
   Widget build(BuildContext context) {
     final product = Provider.of<Product>(context, listen: false);
     final cart = Provider.of<Cart>(context, listen: false);
+    
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: GridTile(

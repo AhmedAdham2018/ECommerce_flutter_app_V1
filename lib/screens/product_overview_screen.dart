@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/providers/products_provider.dart';
 import '../widgets/drawer_widget.dart';
 import './cart_screen.dart';
 import '../providers/cart.dart';
 import 'package:provider/provider.dart';
 import '../widgets/products_grid_view.dart';
 import '../widgets/badge.dart.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 
 enum FilterOptions {
   Favorites,
@@ -18,6 +20,25 @@ class ProductOverviewScreen extends StatefulWidget {
 
 class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
   var _showFavoriteProducts = false;
+  //var _isInit = true;
+  var _isLoading = false;
+
+  @override
+  void initState() {
+    
+        setState(() {
+      _isLoading = true;
+    });
+    
+    Provider.of<Products>(context, listen: false).getAndSetProducts().then((_) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
+
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +86,12 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
           ),
         ],
       ),
-      body: ProductsGridView(
-        favoriteProduct: _showFavoriteProducts,
+      body: ModalProgressHUD(
+        child: ProductsGridView(
+          favoriteProduct: _showFavoriteProducts,
+        ),
+        color: Theme.of(context).primaryColor,
+        inAsyncCall: _isLoading,
       ),
       drawer: MyDrawer(),
     );

@@ -1,11 +1,140 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_app/model/http_exception.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as https;
 
 import './product.dart';
 
 class Products with ChangeNotifier {
-  List<Product> _items = [
+  static const _url =
+      'https://marketareaflutter-default-rtdb.firebaseio.com/products.json';
+
+  List<Product> _items = [];
+
+  List<Product> get items {
+    return [..._items];
+  }
+
+  //function return only favorite items.
+
+  List<Product> get favoriteItems {
+    return _items.where((item) => item.isFavorite).toList();
+  }
+
+  Product findProductById(String id) {
+    return _items.firstWhere((product) => product.id == id);
+  }
+
+  Future<void> addItem(Product product) async {
+    try {
+      final res = await https.post(
+        _url,
+        body: json.encode({
+          'productName': product.productName,
+          'description': product.description,
+          'price': product.price,
+          'imgUrl': product.imageUrl,
+          'isFavorite': product.isFavorite,
+        }),
+      );
+
+      final newProduct = Product(
+          id: json.decode(res.body)['name'],
+          productName: product.productName,
+          description: product.description,
+          price: product.price,
+          imageUrl: product.imageUrl);
+      _items.add(newProduct);
+      notifyListeners();
+    } catch (err) {
+      print(err);
+      throw err;
+    }
+  }
+
+  Future<void> getAndSetProducts() async {
+    const url =
+        'https://marketareaflutter-default-rtdb.firebaseio.com/products.json';
+
+    try {
+      final res = await https.get(url);
+      final productsData =
+          json.decode(res.body) as Map<String,dynamic>;
+
+      if (productsData == null) {
+        return;
+      }
+      final List<Product> loadedProducts = [];
+      productsData.forEach((productId, productValue) {
+        loadedProducts.add(
+          Product(
+              id: productId,
+              productName: productValue['productName'],
+              description: productValue['description'],
+              price: productValue['price'],
+              imageUrl: productValue['imgUrl'],
+              isFavorite: productValue['isFavorite']),
+        );
+        _items = loadedProducts;
+        notifyListeners();
+      });
+
+      notifyListeners();
+      print(productsData);
+    } catch (err) {
+      print(err);
+      throw err;
+    }
+  }
+
+  Future<void> updateProduct(String id, Product editedProduct) async {
+    final index = _items.indexWhere((product) => product.id == id);
+
+    if (index >= 0) {
+      final url =
+          'https://marketareaflutter-default-rtdb.firebaseio.com/products/$id.json';
+
+      await https.patch(
+        url,
+        body: json.encode({
+          'productName': editedProduct.productName,
+          'description': editedProduct.description,
+          'price': editedProduct.price,
+          'imgUrl': editedProduct.imageUrl,
+        }),
+      );
+      _items[index] = editedProduct;
+      notifyListeners();
+    } else {
+      print('Can not update product..');
+    }
+  }
+
+  Future<void> deleteProductItem(String id) async {
+    final url =
+        'https://marketareaflutter-default-rtdb.firebaseio.com/products/$id.json';
+
+    final existingProductIndex =
+        _items.indexWhere((product) => product.id == id);
+    var existingProductData = _items[existingProductIndex];
+
+    _items.remove(existingProductData);
+    notifyListeners();
+
+    final res = await https.delete(url);
+
+    if (res.statusCode >= 400) {
+      _items.insert(existingProductIndex, existingProductData);
+      notifyListeners();
+      throw HttpException(messageTitle: 'could not delete product item');
+    }
+
+    existingProductData = null;
+  }
+}
+
+/*
+
     Product(
       id: 'p1',
       productName: 'Red Shirt',
@@ -66,66 +195,5 @@ class Products with ChangeNotifier {
         price: 89.35,
         imageUrl:
             'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR1echiG6L2W9c-atGODP_RtZZGNlmdhaSzNg&usqp=CAU'),
-  ];
 
-  List<Product> get items {
-    return [..._items];
-  }
-
-  //function return only favorite items.
-
-  List<Product> get favoriteItems {
-    return _items.where((item) => item.isFavorite).toList();
-  }
-
-  Product findProductById(String id) {
-    return _items.firstWhere((product) => product.id == id);
-  }
-
-  Future<void> addItem(Product product) async {
-    const url =
-        'https://marketareaflutter-default-rtdb.firebaseio.com/products.json';
-
-    try {
-      final res = await https.post(
-        url,
-        body: json.encode({
-          'productName': product.productName,
-          'description': product.description,
-          'price': product.price,
-          'imgUrl': product.imageUrl,
-          'isFavorite': product.isFavorite,
-        }),
-      );
-
-      final newProduct = Product(
-          id: jsonDecode(res.body)['name'],
-          productName: product.productName,
-          description: product.description,
-          price: product.price,
-          imageUrl: product.imageUrl);
-      _items.add(newProduct);
-      notifyListeners();
-      
-      print(jsonDecode(res.body));
-    } catch (err) {
-      print(err);
-      throw err;
-    }
-  }
-
-  void updateProduct(String id, Product editedProduct) {
-    final index = _items.indexWhere((product) => product.id == id);
-    if (index >= 0) {
-      _items[index] = editedProduct;
-      notifyListeners();
-    } else {
-      print('Can not update product..');
-    }
-  }
-
-  void deleteProductItem(String id) {
-    _items.removeWhere((product) => product.id == id);
-    notifyListeners();
-  }
-}
+*/

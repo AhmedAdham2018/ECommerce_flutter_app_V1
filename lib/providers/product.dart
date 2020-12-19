@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as https;
 
 class Product with ChangeNotifier {
   final String id;
@@ -16,8 +19,27 @@ class Product with ChangeNotifier {
       @required this.imageUrl,
       this.isFavorite = false});
 
-  void toggleFavorite() {
+  Future<void> toggleFavorite() async {
+    final url =
+        'https://marketareaflutter-default-rtdb.firebaseio.com/products/$id.json';
+    var oldFavorite = isFavorite;
+
     isFavorite = !isFavorite;
     notifyListeners();
+    try {
+      var res = await https.patch(
+        url,
+        body: json.encode({
+          'isFavorite': isFavorite,
+        }),
+      );
+      if (res.statusCode >= 400) {
+        isFavorite = oldFavorite;
+        notifyListeners();
+      }
+    } catch (err) {
+      isFavorite = oldFavorite;
+      notifyListeners();
+    }
   }
 }

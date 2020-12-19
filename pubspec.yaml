@@ -17,6 +17,7 @@ dependencies:
   http:
   provider:
   intl:
+  modal_progress_hud:  
 
 dev_dependencies:
   flutter_test:

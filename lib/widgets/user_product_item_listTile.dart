@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/model/http_exception.dart';
 import '../providers/products_provider.dart';
 import 'package:provider/provider.dart';
 import '../screens/edit_product_screen.dart';
@@ -11,6 +12,7 @@ class UserProductItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scaffold = Scaffold.of(context);
     return ListTile(
       leading: CircleAvatar(
         backgroundImage: NetworkImage(imgUrl),
@@ -34,9 +36,16 @@ class UserProductItemTile extends StatelessWidget {
                   Icons.delete,
                   color: Theme.of(context).errorColor,
                 ),
-                onPressed: () {
-                  Provider.of<Products>(context, listen: false)
-                      .deleteProductItem(id);
+                onPressed: () async {
+                  try {
+                    await Provider.of<Products>(context, listen: false)
+                        .deleteProductItem(id);
+                  } catch (err) {
+                    final snackbar = SnackBar(
+                      content: Text(err.toString()),
+                    );
+                    scaffold.showSnackBar(snackbar);
+                  }
                 }),
           ],
         ),
