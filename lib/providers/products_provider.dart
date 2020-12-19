@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_app/model/http_exception.dart';
+import './auth_provider.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as https;
 
 import './product.dart';
 
 class Products with ChangeNotifier {
+  String _tokenId;
+
   static const _url =
       'https://marketareaflutter-default-rtdb.firebaseio.com/products.json';
 
@@ -13,6 +16,11 @@ class Products with ChangeNotifier {
 
   List<Product> get items {
     return [..._items];
+  }
+
+  void update(Auth auth, List<Product> items) {
+    _tokenId = auth.token;
+    _items = items;
   }
 
   //function return only favorite items.
@@ -53,13 +61,12 @@ class Products with ChangeNotifier {
   }
 
   Future<void> getAndSetProducts() async {
-    const url =
-        'https://marketareaflutter-default-rtdb.firebaseio.com/products.json';
+    final url =
+        'https://marketareaflutter-default-rtdb.firebaseio.com/products.json?auth=$_tokenId';
 
     try {
       final res = await https.get(url);
-      final productsData =
-          json.decode(res.body) as Map<String,dynamic>;
+      final productsData = json.decode(res.body) as Map<String, dynamic>;
 
       if (productsData == null) {
         return;
@@ -80,7 +87,7 @@ class Products with ChangeNotifier {
       });
 
       notifyListeners();
-      print(productsData);
+      //print(productsData);
     } catch (err) {
       print(err);
       throw err;

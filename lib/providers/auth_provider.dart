@@ -3,13 +3,25 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_app/model/http_exception.dart';
 import 'package:http/http.dart' as https;
-
 import '../model/credintial.dart';
 
 class Auth with ChangeNotifier {
   String _tokenId;
   DateTime _expirdTokenTime;
-  String _idUser;
+  String _userId;
+
+  bool get isAuth {
+    return token != null;
+  }
+
+  String get token {
+    if (_tokenId != null &&
+        _expirdTokenTime.isAfter(DateTime.now()) &&
+        _expirdTokenTime != null) {
+      return _tokenId;
+    }
+    return null;
+  }
 
   Future<void> signUpWithMail(String email, String password) async {
     return authenticate(email, password, 'signUp');
@@ -38,9 +50,17 @@ class Auth with ChangeNotifier {
         String message = resData['error']['message'];
         throw HttpException(messageTitle: message);
       }
+
+      _tokenId = resData['idToken'];
+      _userId = resData['localId'];
+      _expirdTokenTime = DateTime.now().add(
+        Duration(
+          seconds: int.parse(resData['expiresIn']),
+        ),
+      );
+      notifyListeners();
     } catch (err) {
       throw err;
     }
-
   }
 }

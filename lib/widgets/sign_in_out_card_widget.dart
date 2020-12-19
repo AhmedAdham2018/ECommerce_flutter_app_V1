@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/model/http_exception.dart';
-import '../screens/product_overview_screen.dart';
 import 'package:provider/provider.dart';
-
 import '../providers/auth_provider.dart';
 
 enum AuthMode { Signup, Login }
@@ -44,10 +42,7 @@ class _SignInOutCardState extends State<SignInOutCard> {
       if (_authMode == AuthMode.Login) {
         // Log user in
         await Provider.of<Auth>(context, listen: false)
-            .signInWithMail(_authData['email'], _authData['password'])
-            .then((_) {
-          Navigator.of(context).pushNamed(ProductOverviewScreen.routeName);
-        });
+            .signInWithMail(_authData['email'], _authData['password']);
       } else {
         // Sign user up
 

@@ -25,8 +25,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider.value(
           value: Auth(),
         ),
-        ChangeNotifierProvider.value(
-          value: Products(),
+        ChangeNotifierProxyProvider<Auth, Products>(
+          create: (context) => Products(),
+          update: (context, authData, products) {
+            return Products()..update(authData , products.items == null ? [] : products.items);
+          },
         ),
         ChangeNotifierProvider.value(
           value: Cart(),
@@ -35,23 +38,27 @@ class MyApp extends StatelessWidget {
           value: Order(),
         ),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Market Area',
-        theme: ThemeData(
-          primarySwatch: Colors.purple,
-          accentColor: Colors.deepOrange,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-          fontFamily: 'Lato',
-        ),
-        home: SignInOutScreen(),
-        routes: {
-          ProductOverviewScreen.routeName: (context) => ProductOverviewScreen(),
-          ProductDetailScreen.routeId: (context) => ProductDetailScreen(),
-          CartScreen.routeName: (context) => CartScreen(),
-          OrderScreen.routeName: (context) => OrderScreen(),
-          UserProductScreen.routeName: (context) => UserProductScreen(),
-          EditProductScreen.routeName: (context) => EditProductScreen(),
+      child: Consumer<Auth>(
+        builder: (context, authData, _) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Market Area',
+            theme: ThemeData(
+              primarySwatch: Colors.purple,
+              accentColor: Colors.deepOrange,
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+              fontFamily: 'Lato',
+            ),
+            home: authData.isAuth ? ProductOverviewScreen() : SignInOutScreen(),
+            routes: {
+              //ProductOverviewScreen.routeName: (context) => ProductOverviewScreen(),
+              ProductDetailScreen.routeId: (context) => ProductDetailScreen(),
+              CartScreen.routeName: (context) => CartScreen(),
+              OrderScreen.routeName: (context) => OrderScreen(),
+              UserProductScreen.routeName: (context) => UserProductScreen(),
+              EditProductScreen.routeName: (context) => EditProductScreen(),
+            },
+          );
         },
       ),
     );
