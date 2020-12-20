@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/providers/auth_provider.dart';
 import './screens/order_screen.dart';
-import './providers/orders.dart';
+import 'providers/orders_provider.dart';
 import './providers/cart.dart';
 import './providers/products_provider.dart';
 import 'package:provider/provider.dart';
@@ -28,14 +28,17 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProxyProvider<Auth, Products>(
           create: (context) => Products(),
           update: (context, authData, products) {
-            return Products()..update(authData , products.items == null ? [] : products.items);
+            return Products()
+              ..update(authData, products.items == null ? [] : products.items);
           },
         ),
+        ChangeNotifierProxyProvider<Auth, Order>(
+            create: (context) => Order(),
+            update: (context, authData, ordersData) {
+              return Order()..update(authData.token, ordersData.orders == null  ? [] : ordersData.orders);
+            }),
         ChangeNotifierProvider.value(
           value: Cart(),
-        ),
-        ChangeNotifierProvider.value(
-          value: Order(),
         ),
       ],
       child: Consumer<Auth>(

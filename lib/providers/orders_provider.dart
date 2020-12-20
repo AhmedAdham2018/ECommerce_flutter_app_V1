@@ -1,28 +1,27 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_app/providers/cart.dart';
+import './order.dart';
+import './cart.dart';
 import 'package:http/http.dart' as https;
 
-class OrderItem with ChangeNotifier {
-  final String id;
-  final double amount;
-  final List<CartItem> productItems;
-  final DateTime dateTime;
-
-  OrderItem({this.id, this.amount, this.productItems, this.dateTime});
-}
-
 class Order with ChangeNotifier {
-  final List<OrderItem> _orders = [];
+  List<OrderItem> _orders = [];
 
   List<OrderItem> get orders {
     return [..._orders];
   }
 
+  String _tokenId;
+
+  void update(String token, List<OrderItem> orders) {
+    _tokenId = token;
+    _orders = orders;
+  }
+
   Future<void> addOrder(List<CartItem> cartProducts, double total) async {
     final url =
-        'https://marketareaflutter-default-rtdb.firebaseio.com/orders.json';
+        'https://marketareaflutter-default-rtdb.firebaseio.com/orders.json?auth=$_tokenId';
 
     final timeStamp = DateTime.now();
 
@@ -58,7 +57,7 @@ class Order with ChangeNotifier {
 
   Future<void> getAndSetOrders() async {
     final url =
-        'https://marketareaflutter-default-rtdb.firebaseio.com/orders.json';
+        'https://marketareaflutter-default-rtdb.firebaseio.com/orders.json?auth=$_tokenId';
 
     try {
       https.Response res = await https.get(url);

@@ -8,9 +8,7 @@ import './product.dart';
 
 class Products with ChangeNotifier {
   String _tokenId;
-
-  static const _url =
-      'https://marketareaflutter-default-rtdb.firebaseio.com/products.json';
+  String _userId;
 
   List<Product> _items = [];
 
@@ -21,6 +19,7 @@ class Products with ChangeNotifier {
   void update(Auth auth, List<Product> items) {
     _tokenId = auth.token;
     _items = items;
+    _userId = auth.userId;
   }
 
   //function return only favorite items.
@@ -34,10 +33,13 @@ class Products with ChangeNotifier {
   }
 
   Future<void> addItem(Product product) async {
+    final url =
+        'https://marketareaflutter-default-rtdb.firebaseio.com/products.json?auth=$_tokenId';
     try {
       final res = await https.post(
-        _url,
+        url,
         body: json.encode({
+          'creatorId': _userId,
           'productName': product.productName,
           'description': product.description,
           'price': product.price,
@@ -60,9 +62,11 @@ class Products with ChangeNotifier {
     }
   }
 
-  Future<void> getAndSetProducts() async {
-    final url =
-        'https://marketareaflutter-default-rtdb.firebaseio.com/products.json?auth=$_tokenId';
+  Future<void> getAndSetProducts([bool filterByUser = false]) async {
+    final filterSegment = filterByUser ? 'orderBy="creatorId"&equalTo="$_userId"' : '';
+    
+    var url =
+        'https://marketareaflutter-default-rtdb.firebaseio.com/products.json?auth=$_tokenId&$filterSegment';
 
     try {
       final res = await https.get(url);
@@ -71,6 +75,13 @@ class Products with ChangeNotifier {
       if (productsData == null) {
         return;
       }
+
+      url =
+          'https://marketareaflutter-default-rtdb.firebaseio.com/userFavorites/$_userId.json?auth=$_tokenId';
+
+      final favoritesRes = await https.get(url);
+      final favoritesData = json.decode(favoritesRes.body);
+
       final List<Product> loadedProducts = [];
       productsData.forEach((productId, productValue) {
         loadedProducts.add(
@@ -80,7 +91,9 @@ class Products with ChangeNotifier {
               description: productValue['description'],
               price: productValue['price'],
               imageUrl: productValue['imgUrl'],
-              isFavorite: productValue['isFavorite']),
+              isFavorite: favoritesData == null
+                  ? false
+                  : favoritesData[productId] ?? false),
         );
         _items = loadedProducts;
         notifyListeners();
@@ -99,7 +112,7 @@ class Products with ChangeNotifier {
 
     if (index >= 0) {
       final url =
-          'https://marketareaflutter-default-rtdb.firebaseio.com/products/$id.json';
+          'https://marketareaflutter-default-rtdb.firebaseio.com/products/$id.json?auth=$_tokenId';
 
       await https.patch(
         url,
@@ -119,7 +132,7 @@ class Products with ChangeNotifier {
 
   Future<void> deleteProductItem(String id) async {
     final url =
-        'https://marketareaflutter-default-rtdb.firebaseio.com/products/$id.json';
+        'https://marketareaflutter-default-rtdb.firebaseio.com/products/$id.json?auth=$_tokenId';
 
     final existingProductIndex =
         _items.indexWhere((product) => product.id == id);

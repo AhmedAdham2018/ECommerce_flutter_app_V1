@@ -19,24 +19,25 @@ class Product with ChangeNotifier {
       @required this.imageUrl,
       this.isFavorite = false});
 
-  Future<void> toggleFavorite() async {
+  Future<void> toggleFavorite(String token, String userId) async {
     final url =
-        'https://marketareaflutter-default-rtdb.firebaseio.com/products/$id.json';
+        'https://marketareaflutter-default-rtdb.firebaseio.com/userFavorites/$userId/$id.json?auth=$token';
     var oldFavorite = isFavorite;
 
     isFavorite = !isFavorite;
     notifyListeners();
     try {
-      var res = await https.patch(
+      var res = await https.put(
         url,
-        body: json.encode({
-          'isFavorite': isFavorite,
-        }),
+        body: json.encode(
+          isFavorite,
+        ),
       );
       if (res.statusCode >= 400) {
         isFavorite = oldFavorite;
         notifyListeners();
       }
+
     } catch (err) {
       isFavorite = oldFavorite;
       notifyListeners();
