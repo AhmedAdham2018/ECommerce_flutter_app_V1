@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import './auth_provider.dart';
 import './order.dart';
 import './cart.dart';
 import 'package:http/http.dart' as https;
@@ -13,15 +14,17 @@ class Order with ChangeNotifier {
   }
 
   String _tokenId;
+  String _userId;
 
-  void update(String token, List<OrderItem> orders) {
-    _tokenId = token;
+  void update(Auth auth, List<OrderItem> orders) {
+    _tokenId = auth.token;
+    _userId = auth.userId;
     _orders = orders;
   }
 
   Future<void> addOrder(List<CartItem> cartProducts, double total) async {
     final url =
-        'https://marketareaflutter-default-rtdb.firebaseio.com/orders.json?auth=$_tokenId';
+        'https://marketareaflutter-default-rtdb.firebaseio.com/orders/$_userId.json?auth=$_tokenId';
 
     final timeStamp = DateTime.now();
 
@@ -57,7 +60,7 @@ class Order with ChangeNotifier {
 
   Future<void> getAndSetOrders() async {
     final url =
-        'https://marketareaflutter-default-rtdb.firebaseio.com/orders.json?auth=$_tokenId';
+        'https://marketareaflutter-default-rtdb.firebaseio.com/orders/$_userId.json?auth=$_tokenId';
 
     try {
       https.Response res = await https.get(url);

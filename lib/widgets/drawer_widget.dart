@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 import '../screens/user_product_screen.dart';
 import '../screens/order_screen.dart';
 
@@ -36,6 +38,17 @@ class MyDrawer extends StatelessWidget {
             onTap: () => Navigator.of(context)
                 .pushReplacementNamed(UserProductScreen.routeName),
           ),
+          Divider(),
+          ListTile(
+              leading: Icon(Icons.exit_to_app),
+              title: Text('Sign Out'),
+              onTap: () {
+                Navigator.of(context).pop();
+
+                //user sign out func..
+
+                Provider.of<Auth>(context, listen: false).signOut();
+              }),
         ],
       ),
       elevation: 22,
