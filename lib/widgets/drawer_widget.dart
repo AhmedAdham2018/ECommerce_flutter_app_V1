@@ -45,6 +45,8 @@ class MyDrawer extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).pop();
 
+                Navigator.of(context).pushReplacementNamed('/');
+                
                 //user sign out func..
 
                 Provider.of<Auth>(context, listen: false).signOut();

@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_app/model/http_exception.dart';
 import 'package:http/http.dart' as https;
 import '../model/credintial.dart';
@@ -9,6 +11,7 @@ class Auth with ChangeNotifier {
   String _tokenId;
   DateTime _expirdTokenTime;
   String _userId;
+  Timer _timerToExpired;
 
   bool get isAuth {
     return token != null;
@@ -62,16 +65,67 @@ class Auth with ChangeNotifier {
           seconds: int.parse(resData['expiresIn']),
         ),
       );
+      _autoSignOut();
       notifyListeners();
+
+      final prefs = await SharedPreferences.getInstance();
+      final userData = json.encode({
+        'token': _tokenId,
+        'userId': _userId,
+        'expiredTime': _expirdTokenTime.toIso8601String()
+      });
+
+      prefs.setString('userData', userData);
     } catch (err) {
       throw err;
     }
   }
 
-  void signOut() {
+  Future<bool> autoSignIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey('userData')) {
+      return false;
+    }
+
+    final extractedData =
+        json.decode(prefs.getString('userData')) as Map<String, Object>;
+    final expiredTime = DateTime.parse(extractedData['expiredTime']);
+
+    if (expiredTime.isBefore(DateTime.now())) {
+      return false;
+    }
+
+    _tokenId = extractedData['token'];
+    _userId = extractedData['userId'];
+    _expirdTokenTime = expiredTime;
+    notifyListeners();
+    _autoSignOut();
+    return true;
+  }
+
+  Future<void> signOut() async {
     _userId = null;
     _expirdTokenTime = null;
     _tokenId = null;
+    if (_timerToExpired != null) {
+      _timerToExpired.cancel();
+      _timerToExpired = null;
+    }
+
     notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    prefs.clear();
+  }
+
+  void _autoSignOut() {
+    if (_timerToExpired != null) {
+      _timerToExpired.cancel();
+    }
+    final expiredTimeToSignOut = _expirdTokenTime
+        .difference(
+          DateTime.now(),
+        )
+        .inSeconds;
+    _timerToExpired = Timer(Duration(seconds: expiredTimeToSignOut), signOut);
   }
 }

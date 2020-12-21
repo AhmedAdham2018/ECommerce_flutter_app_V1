@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/providers/auth_provider.dart';
-import './screens/order_screen.dart';
-import 'providers/orders_provider.dart';
+import 'package:provider/provider.dart';
+
+import './providers/auth_provider.dart';
+import './providers/orders_provider.dart';
 import './providers/cart.dart';
 import './providers/products_provider.dart';
-import 'package:provider/provider.dart';
+
 import './screens/product_overview_screen.dart';
 import './screens/product_detail_screen.dart';
 import './screens/cart_screen.dart';
 import './screens/user_product_screen.dart';
 import './screens/edit_product_screen.dart';
 import './screens/sign_in_out_screen.dart';
+import './screens/splash_screen.dart';
+import './screens/order_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -35,7 +38,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProxyProvider<Auth, Order>(
             create: (context) => Order(),
             update: (context, authData, ordersData) {
-              return Order()..update(authData, ordersData.orders == null  ? [] : ordersData.orders);
+              return Order()
+                ..update(authData,
+                    ordersData.orders == null ? [] : ordersData.orders);
             }),
         ChangeNotifierProvider.value(
           value: Cart(),
@@ -52,7 +57,19 @@ class MyApp extends StatelessWidget {
               visualDensity: VisualDensity.adaptivePlatformDensity,
               fontFamily: 'Lato',
             ),
-            home: authData.isAuth ? ProductOverviewScreen() : SignInOutScreen(),
+            home: authData.isAuth
+                ? ProductOverviewScreen()
+                : FutureBuilder(
+                    future: authData.autoSignIn(),
+                    builder: (context, authSnapshotData) {
+                      if (authSnapshotData.connectionState ==
+                          ConnectionState.waiting) {
+                        return SplashScreen();
+                      } else {
+                        return SignInOutScreen();
+                      }
+                    },
+                  ),
             routes: {
               //ProductOverviewScreen.routeName: (context) => ProductOverviewScreen(),
               ProductDetailScreen.routeId: (context) => ProductDetailScreen(),
